@@ -259,6 +259,7 @@ function loadCredentials() {
 }
 
 async function validateCredentials(expectedAccessKeyId) {
+  core.info(`[validateCredentials] Expecting ${expectedAccessKeyId}`);
   let credentials;
   try {
     credentials = await loadCredentials();
@@ -290,7 +291,7 @@ function getStsClient(region) {
 }
 
 async function run() {
-  core.info("Running action");
+  core.info("[run] Starting");
   try {
     // Get inputs
     const accessKeyId = core.getInput("aws-access-key-id", { required: false });
@@ -332,11 +333,14 @@ async function run() {
     // This wraps the logic for deciding if we should rely on the GH OIDC provider since we may need to reference
     // the decision in a few differennt places. Consolidating it here makes the logic clearer elsewhere.
     const useGitHubOIDCProvider = () => {
-      core.info("Checking if can use OIDC provider")
+      core.info("[run] Checking if can use OIDC provider");
       // The assumption here is that self-hosted runners won't be populating the `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
       // environment variable and they won't be providing a web idenity token file or access key either.
       // V2 of the action might relax this a bit and create an explicit precedence for these so that customers
       // can provide as much info as they want and we will follow the established credential loading precedence.
+      core.info(
+        `roleToAssume: ${roleToAssume} - requestToken: ${process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN} - accessKeyId: ${accessKeyId} - webIdentityTokenFile: ${webIdentityTokenFile}`
+      );
       return (
         roleToAssume &&
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
@@ -366,20 +370,20 @@ async function run() {
     let sourceAccountId;
     let webIdentityToken;
     if (useGitHubOIDCProvider()) {
-      console.log("Using OIDC provider")
+      console.log("[run] Using OIDC provider");
       webIdentityToken = await getWebIdentityToken();
       roleDurationSeconds =
         core.getInput("role-duration-seconds", { required: false }) ||
         DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
       // We don't validate the credentials here because we don't have them yet when using OIDC.
     } else {
+      console.log("[run] Not running OIDC provider");
       // Regardless of whether any source credentials were provided as inputs,
       // validate that the SDK can actually pick up credentials.  This validates
       // cases where this action is on a self-hosted runner that doesn't have credentials
       // configured correctly, and cases where the user intended to provide input
       // credentials but the secrets inputs resolved to empty strings.
       await validateCredentials(accessKeyId);
-
       sourceAccountId = await exportAccountId(maskAccountId, region);
     }
 
