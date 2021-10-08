@@ -214,6 +214,7 @@ async function exportAccountId(maskAccountId, region) {
 }
 
 async function getWebIdentityToken() {
+  core.info(`[getWebIdentityToken] starting`);
   const isDefined = (i) => !!i;
   const { ACTIONS_ID_TOKEN_REQUEST_URL, ACTIONS_ID_TOKEN_REQUEST_TOKEN } =
     process.env;
@@ -341,6 +342,14 @@ async function run() {
       core.info(
         `roleToAssume: ${roleToAssume} - requestToken: ${process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN} - accessKeyId: ${accessKeyId} - webIdentityTokenFile: ${webIdentityTokenFile}`
       );
+      core.info(
+        `Is OIDC: ${
+          roleToAssume &&
+          process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
+          !accessKeyId &&
+          !webIdentityTokenFile
+        }`
+      );
       return (
         roleToAssume &&
         process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN &&
@@ -372,6 +381,7 @@ async function run() {
     if (useGitHubOIDCProvider()) {
       console.log("[run] Using OIDC provider");
       webIdentityToken = await getWebIdentityToken();
+      core.info(`webIdentityToken: ${webIdentityToken}`);
       roleDurationSeconds =
         core.getInput("role-duration-seconds", { required: false }) ||
         DEFAULT_ROLE_DURATION_FOR_OIDC_ROLES;
