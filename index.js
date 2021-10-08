@@ -86,7 +86,7 @@ async function assumeRole(params) {
   }
 
   let assumeFunction = sts.assumeRole.bind(sts);
-  
+
   // These are customizations needed for the GH OIDC Provider
   if(isDefined(webIdentityToken)) {
     delete assumeRoleRequest.Tags;
@@ -111,8 +111,8 @@ async function assumeRole(params) {
     } catch(error) {
       throw new Error(`Web identity token file could not be read: ${error.message}`);
     }
-    
-  } 
+
+  }
 
   return assumeFunction(assumeRoleRequest)
     .promise()
@@ -253,6 +253,7 @@ function getStsClient(region) {
 }
 
 async function run() {
+  core.info("Running action")
   try {
     // Get inputs
     const accessKeyId = core.getInput('aws-access-key-id', { required: false });
@@ -296,7 +297,7 @@ async function run() {
 
       exportCredentials({accessKeyId, secretAccessKey, sessionToken});
     }
-    
+
     // Attempt to load credentials from the GitHub OIDC provider.
     // If a user provides an IAM Role Arn and DOESN'T provide an Access Key Id
     // The only way to assume the role is via GitHub's OIDC provider.
